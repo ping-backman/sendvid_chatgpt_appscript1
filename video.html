@@ -20,7 +20,7 @@
     const id = params.get("id");
 
     async function loadVideo() {
-      const res = await fetch(`YOUR_DEPLOYED_APPSCRIPT_URL/exec?id=${id}`);
+      const res = await fetch(`https://script.google.com/macros/s/AKfycbwm7_YDeDbPUut-Fb4lQW_MU861dtqd46r54sPoelOFRDYcqkIcnLj8_pP_mqyoDJxx/exec/exec?id=${id}`);
       const data = await res.json();
       const v = data.video;
       if (!v) {
