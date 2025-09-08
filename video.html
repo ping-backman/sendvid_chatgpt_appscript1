@@ -1,101 +1,39 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Loading Video...</title>
+  <title>Watch Video</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      position: relative;
-    }
-    #video-frame {
-      width: 100%;
-      height: 100%;
-      border: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-    }
-    .back-button {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      background: rgba(0, 0, 0, 0.6);
-      color: white;
-      padding: 10px 15px;
-      border-radius: 5px;
-      text-decoration: none;
-      z-index: 1000;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .back-button:hover {
-      background: rgba(0, 0, 0, 0.8);
-    }
-    .back-button:before {
-      content: "←";
-      font-weight: bold;
-      margin-right: 5px;
-    }
-    .loading {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: #000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      z-index: 2000;
-      font-size: 1.2em;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; background: #000; color: #fff; text-align: center; }
+    iframe { width: 80%; height: 450px; border: none; border-radius: 8px; }
+    .title { margin: 20px 0; font-size: 20px; }
+    .meta { color: #ccc; font-size: 14px; }
   </style>
 </head>
 <body>
-  <div class="loading">Loading video...</div>
-  <a href="/" class="back-button">Back to Gallery</a>
-  
-  <iframe 
-    id="video-frame"
-    src=""
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-    allowfullscreen>
-  </iframe>
+  <h1 id="video-title">Loading...</h1>
+  <iframe id="player" allowfullscreen></iframe>
+  <div class="meta" id="video-meta"></div>
 
   <script>
-    // Get video ID from URL path
-    const path = window.location.pathname;
-    const videoId = path.split('/').filter(Boolean).pop();
-    
-    // Set iframe source to EMBED URL (critical fix)
-    if (videoId) {
-      document.getElementById('video-frame').src = `https://sendvid.com/embed/${videoId}`;
-      
-      // Hide loading screen after a moment
-      setTimeout(() => {
-        document.querySelector('.loading').style.display = 'none';
-      }, 1000);
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+
+    async function loadVideo() {
+      const res = await fetch(`YOUR_DEPLOYED_APPSCRIPT_URL/exec?id=${id}`);
+      const data = await res.json();
+      const v = data.video;
+      if (!v) {
+        document.getElementById("video-title").innerText = "Video not found.";
+        return;
+      }
+      document.title = v.title;
+      document.getElementById("video-title").innerText = v.title;
+      document.getElementById("player").src = v.embed;
+      document.getElementById("video-meta").innerText = `${v.duration} • ${v.views} views`;
     }
-    
-    // For testing related videos
-    window.goToVideo = function(newVideoId) {
-      // Open new video in new tab
-      window.open(`/v/${newVideoId}`, '_blank');
-      
-      // Redirect current tab to smartlink
-      window.location.href = 'https://wikipedia.org';
-    }
+
+    loadVideo();
   </script>
 </body>
 </html>
