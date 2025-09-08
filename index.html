@@ -5,25 +5,58 @@
   <title>My Video Gallery</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+    h1 { margin-bottom: 10px; }
+    .controls { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+    select, input { padding: 6px; border-radius: 4px; border: 1px solid #ccc; }
+    button { padding: 6px 12px; border: none; border-radius: 4px; background: #333; color: #fff; cursor: pointer; }
+    button:hover { background: #555; }
+
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
-    .card { background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .card { background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); transition: transform 0.2s; }
+    .card:hover { transform: scale(1.02); }
     .thumb { width: 100%; border-radius: 8px; }
-    .title { font-size: 14px; margin: 8px 0; }
+    .title { font-size: 14px; margin: 8px 0; font-weight: bold; }
     .meta { font-size: 12px; color: #666; }
+    .loadmore { margin: 20px auto; display: block; }
   </style>
 </head>
 <body>
   <h1>Video Gallery</h1>
+
+  <!-- Controls -->
+  <div class="controls">
+    <select id="sort">
+      <option value="relevance">Most Relevant</option>
+      <option value="popular">Most Popular</option>
+      <option value="newest">Newest</option>
+      <option value="short">Short (&lt; 10m)</option>
+      <option value="long">Long (10–40m)</option>
+      <option value="longest">Longest (40m+)</option>
+      <option value="discover">Discover More</option>
+    </select>
+    <input type="text" id="tag" placeholder="Search by tag or keyword">
+    <button onclick="applyFilters()">Apply</button>
+  </div>
+
+  <!-- Gallery -->
   <div id="gallery" class="grid"></div>
 
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwm7_YDeDbPUut-Fb4lQW_MU861dtqd46r54sPoelOFRDYcqkIcnLj8_pP_mqyoDJxx/exec?limit=20&sort=relevance";
+  <!-- Load More -->
+  <button id="loadmore" class="loadmore" onclick="loadMore()">Load More</button>
 
-    async function loadVideos() {
-      const res = await fetch(API_URL);
+  <script>
+    const API_BASE = "https://script.google.com/macros/s/AKfycbwm7_YDeDbPUut-Fb4lQW_MU861dtqd46r54sPoelOFRDYcqkIcnLj8_pP_mqyoDJxx/exec";
+    let offset = 0;
+    const limit = 20;
+    let currentSort = "relevance";
+    let currentTag = "";
+
+    async function fetchVideos(reset=false) {
+      const url = `${API_BASE}?limit=${limit}&offset=${offset}&sort=${currentSort}&q=${encodeURIComponent(currentTag)}`;
+      const res = await fetch(url);
       const data = await res.json();
-      const container = document.getElementById("gallery");
-      container.innerHTML = "";
+
+      if (reset) document.getElementById("gallery").innerHTML = "";
 
       data.videos.forEach(v => {
         const card = document.createElement("div");
@@ -35,11 +68,32 @@
           <div class="title">${v.title}</div>
           <div class="meta">${v.duration} • ${v.views} views</div>
         `;
-        container.appendChild(card);
+        document.getElementById("gallery").appendChild(card);
       });
+
+      // Handle "Load More" button
+      if (data.nextOffset >= data.total) {
+        document.getElementById("loadmore").style.display = "none";
+      } else {
+        document.getElementById("loadmore").style.display = "block";
+      }
+
+      offset = data.nextOffset;
     }
 
-    loadVideos();
+    function applyFilters() {
+      currentSort = document.getElementById("sort").value;
+      currentTag = document.getElementById("tag").value.trim();
+      offset = 0;
+      fetchVideos(true);
+    }
+
+    function loadMore() {
+      fetchVideos();
+    }
+
+    // Initial load
+    fetchVideos(true);
   </script>
 </body>
 </html>
