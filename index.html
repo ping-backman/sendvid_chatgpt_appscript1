@@ -15,7 +15,22 @@
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
     .card { background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); transition: transform 0.2s; }
     .card:hover { transform: scale(1.02); }
-    .thumb { width: 100%; height: 80mm; object-fit: cover; border-radius: 8px; }
+
+    .thumb-container {
+      width: 100%;
+      height: 80mm;          /* fixed height */
+      overflow: hidden;      /* hides edges of scaled image */
+      border-radius: 8px;
+    }
+
+    .thumb {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(0.9);         /* zoomed out */
+      transform-origin: center center;
+    }
+
     .title { font-size: 14px; margin: 8px 0; font-weight: bold; }
     .meta { font-size: 12px; color: #666; }
     .loadmore { margin: 20px auto; display: block; }
@@ -64,11 +79,11 @@
     <select id="sort" onchange="applyFilters()">
       <option value="relevance">Most Relevant</option>
       <option value="popular">Most Popular</option>
-      <option value="newest">Newest</option>
+      <option value="newest">Newest</option> 
+      <option value="discover">Discover More</option>
       <option value="short">Short (&lt; 10m)</option>
       <option value="long">Long (10–40m)</option>
-      <option value="longest">Longest (40m+)</option>
-      <option value="discover">Discover More</option>
+      <option value="longest">Longest (40m+)</option>       
     </select>
     <div id="small-loading" class="small-spinner"></div>
     <input type="text" id="tag" placeholder="Search by tag or keyword">
@@ -139,7 +154,9 @@
         card.className = "card";
         card.innerHTML = `
           <a href="video.html?id=${v.id}">
-            <img class="thumb" src="${v.thumbnail}" alt="${v.title}">
+            <div class="thumb-container">
+              <img class="thumb" src="${v.thumbnail}" alt="${v.title}">
+            </div>
           </a>
           <div class="title">${v.title}</div>
           <div class="meta">${v.duration} • ${v.views} views</div>
