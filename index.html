@@ -15,22 +15,7 @@
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
     .card { background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); transition: transform 0.2s; }
     .card:hover { transform: scale(1.02); }
-
-    .thumb-container {
-      width: 100%;
-      height: 80mm;          /* fixed height */
-      overflow: hidden;      /* hides edges of scaled image */
-      border-radius: 4px;
-    }
-
-    .thumb {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transform: scale(1.2);         /* zoomed out */
-      transform-origin: center center;
-    }
-
+    .thumb { width: 100%; height: 80mm; object-fit: cover; border-radius: 4px; }
     .title { font-size: 14px; margin: 8px 0; font-weight: bold; }
     .meta { font-size: 12px; color: #666; }
     .loadmore { margin: 20px auto; display: block; }
@@ -154,9 +139,7 @@
         card.className = "card";
         card.innerHTML = `
           <a href="video.html?id=${v.id}">
-            <div class="thumb-container">
-              <img class="thumb" src="${v.thumbnail}" alt="${v.title}">
-            </div>
+            <img class="thumb" src="${v.thumbnail}" alt="${v.title}">
           </a>
           <div class="title">${v.title}</div>
           <div class="meta">${v.duration} • ${v.views} views</div>
