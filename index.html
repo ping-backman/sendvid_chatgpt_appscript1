@@ -15,12 +15,12 @@
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
     .card { background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); transition: transform 0.2s; }
     .card:hover { transform: scale(1.02); }
-    .thumb { width: 100%; border-radius: 8px; }
+    .thumb { width: 100%; height: 80mm; object-fit: cover; border-radius: 8px; }
     .title { font-size: 14px; margin: 8px 0; font-weight: bold; }
     .meta { font-size: 12px; color: #666; }
     .loadmore { margin: 20px auto; display: block; }
 
-    /* Spinner */
+    /* Big Spinner */
     #loading {
       display: none;
       text-align: center;
@@ -37,6 +37,18 @@
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
+
+    /* Small inline spinner */
+    .small-spinner {
+      display: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #ccc;
+      border-top: 2px solid #333;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
@@ -58,6 +70,7 @@
       <option value="longest">Longest (40m+)</option>
       <option value="discover">Discover More</option>
     </select>
+    <div id="small-loading" class="small-spinner"></div>
     <input type="text" id="tag" placeholder="Search by tag or keyword">
     <button onclick="applyFilters()">Apply</button>
   </div>
@@ -80,26 +93,48 @@
     const limit = 20;
     let currentSort = "relevance";
     let currentTag = "";
-    let loading = false; // prevent duplicate fetches
+    let loading = false;
+
+    function parseDuration(duration) {
+      if (!duration) return 0;
+      const parts = duration.split(":").map(Number);
+      if (parts.length === 3) return parts[0]*3600 + parts[1]*60 + parts[2];
+      if (parts.length === 2) return parts[0]*60 + parts[1];
+      return parts[0];
+    }
 
     async function fetchVideos(reset=false) {
       if (loading) return; 
       loading = true;
 
-      // Show spinner
       document.getElementById("loading").style.display = "block";
       document.getElementById("loadmore").style.display = "none";
+      document.getElementById("small-loading").style.display = "inline-block";
 
       const url = `${API_BASE}?limit=${limit}&offset=${offset}&sort=${currentSort}&q=${encodeURIComponent(currentTag)}`;
       const res = await fetch(url);
       const data = await res.json();
+
+      let videos = data.videos;
+
+      // Apply frontend duration filters
+      if (currentSort === "short") {
+        videos = videos.filter(v => parseDuration(v.duration) < 600);
+      } else if (currentSort === "long") {
+        videos = videos.filter(v => {
+          const s = parseDuration(v.duration);
+          return s >= 600 && s <= 2400;
+        });
+      } else if (currentSort === "longest") {
+        videos = videos.filter(v => parseDuration(v.duration) > 2400);
+      }
 
       if (reset) {
         document.getElementById("gallery").innerHTML = "";
         offset = 0;
       }
 
-      data.videos.forEach(v => {
+      videos.forEach(v => {
         const card = document.createElement("div");
         card.className = "card";
         card.innerHTML = `
@@ -112,10 +147,9 @@
         document.getElementById("gallery").appendChild(card);
       });
 
-      // Hide spinner
       document.getElementById("loading").style.display = "none";
+      document.getElementById("small-loading").style.display = "none";
 
-      // Handle "Load More" button
       if (data.nextOffset >= data.total) {
         document.getElementById("loadmore").style.display = "none";
       } else {
@@ -137,7 +171,6 @@
       fetchVideos();
     }
 
-    // Initial load
     fetchVideos(true);
   </script>
 </body>
