@@ -103,6 +103,14 @@
       return parts[0];
     }
 
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
     async function fetchVideos(reset=false) {
       if (loading) return; 
       loading = true;
@@ -111,30 +119,44 @@
       document.getElementById("loadmore").style.display = "none";
       document.getElementById("small-loading").style.display = "inline-block";
 
-      const url = `${API_BASE}?limit=${limit}&offset=${offset}&sort=${currentSort}&q=${encodeURIComponent(currentTag)}`;
+      const url = `${API_BASE}?limit=1000&offset=0&sort=${currentSort}&q=${encodeURIComponent(currentTag)}`;
       const res = await fetch(url);
       const data = await res.json();
 
-      let videos = data.videos;
+      let videos = data.videos || [];
 
-      // Apply frontend duration filters
+      // Apply frontend duration filters (with randomization + top-up)
+      let filtered = [];
       if (currentSort === "short") {
-        videos = videos.filter(v => parseDuration(v.duration) < 600);
+        filtered = videos.filter(v => parseDuration(v.duration) < 600);
       } else if (currentSort === "long") {
-        videos = videos.filter(v => {
+        filtered = videos.filter(v => {
           const s = parseDuration(v.duration);
           return s >= 600 && s <= 2400;
         });
       } else if (currentSort === "longest") {
-        videos = videos.filter(v => parseDuration(v.duration) > 2400);
+        filtered = videos.filter(v => parseDuration(v.duration) > 2400);
+      } else {
+        filtered = [...videos];
       }
+
+      filtered = shuffleArray(filtered);
+
+      // Ensure at least `limit` videos
+      if (filtered.length < limit) {
+        let filler = videos.filter(v => !filtered.includes(v));
+        filler = shuffleArray(filler).slice(0, limit - filtered.length);
+        filtered = [...filtered, ...filler];
+      }
+
+      const batch = filtered.slice(offset, offset + limit);
 
       if (reset) {
         document.getElementById("gallery").innerHTML = "";
         offset = 0;
       }
 
-      videos.forEach(v => {
+      batch.forEach(v => {
         const card = document.createElement("div");
         card.className = "card";
         card.innerHTML = `
@@ -150,13 +172,13 @@
       document.getElementById("loading").style.display = "none";
       document.getElementById("small-loading").style.display = "none";
 
-      if (data.nextOffset >= data.total) {
+      if (offset + limit >= filtered.length) {
         document.getElementById("loadmore").style.display = "none";
       } else {
         document.getElementById("loadmore").style.display = "block";
       }
 
-      offset = data.nextOffset;
+      offset += limit;
       loading = false;
     }
 
